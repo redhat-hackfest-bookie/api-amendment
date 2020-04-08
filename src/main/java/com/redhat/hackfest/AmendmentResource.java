@@ -11,6 +11,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 @Path("/api/v1")
 public class AmendmentResource {
@@ -26,8 +28,8 @@ public class AmendmentResource {
                              @HeaderParam("api-key")
                                      String apikey,
                              @PathParam String sport) throws IOException {
-
-        return Response.ok(Request.Get(String.format("%s/teams/%s/true", url, sport))
+        String endpoint = String.format("%s/teams/%s/true", url, enc(sport));
+        return Response.ok(Request.Get(endpoint)
                                   .addHeader("app-id", appId)
                                   .addHeader("api-key", apikey)
                                   .execute().returnContent().asString()).build();
@@ -44,9 +46,14 @@ public class AmendmentResource {
             @PathParam("sport") String sport,
             @PathParam("homeTeam") String homeTeam,
             @PathParam("awayTeam") String awayTeam) throws IOException {
-        return Response.ok(Request.Get(String.format("%s/simulation/%s/%s/%s", url, sport, homeTeam, awayTeam))
+        String endpoint = String.format("%s/simulation/%s/%s/%s", url, enc(sport), enc(homeTeam), enc(awayTeam));
+        return Response.ok(Request.Get(endpoint)
                                   .addHeader("app-id", appId)
                                   .addHeader("api-key", apikey)
                                   .execute().returnContent().asString()).build();
+    }
+
+    public static String enc(String raw) throws UnsupportedEncodingException {
+        return URLEncoder.encode(raw, "utf-8").replaceAll("\\+", "%20");
     }
 }
