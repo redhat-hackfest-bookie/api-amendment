@@ -2,6 +2,7 @@ package com.redhat.hackfest;
 
 import org.apache.http.client.fluent.Request;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import javax.ws.rs.GET;
@@ -10,10 +11,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Path("/api/v1")
 public class AmendmentResource {
+
+    private static Logger logger = Logger.getLogger(AmendmentResource.class);
 
     @ConfigProperty(name = "app.compughterratings.url")
     String url;
@@ -25,9 +29,10 @@ public class AmendmentResource {
                                      String appId,
                              @HeaderParam("api-key")
                                      String apikey,
-                             @PathParam String sport) throws IOException {
-
-        return Response.ok(Request.Get(String.format("%s/teams/%s/true", url, sport))
+                             @PathParam String sport) throws Exception {
+        String fullUrl = String.format("%s/teams/%s/true", url, enc(sport));
+        logger.infov("URL {0}", fullUrl);
+        return Response.ok(Request.Get(fullUrl)
                                   .addHeader("app-id", appId)
                                   .addHeader("api-key", apikey)
                                   .execute().returnContent().asString()).build();
@@ -43,10 +48,16 @@ public class AmendmentResource {
                     String apikey,
             @PathParam("sport") String sport,
             @PathParam("homeTeam") String homeTeam,
-            @PathParam("awayTeam") String awayTeam) throws IOException {
-        return Response.ok(Request.Get(String.format("%s/simulation/%s/%s/%s", url, sport, homeTeam, awayTeam))
+            @PathParam("awayTeam") String awayTeam) throws Exception {
+        String fullUrl = String.format("%s/simulation/%s/%s/%s", url, enc(sport), enc(homeTeam), enc(awayTeam));
+        logger.infov("URL {0}", fullUrl);
+        return Response.ok(Request.Get(fullUrl)
                                   .addHeader("app-id", appId)
                                   .addHeader("api-key", apikey)
                                   .execute().returnContent().asString()).build();
+    }
+
+    private String enc(String str) throws Exception {
+        return URLEncoder.encode(str, StandardCharsets.UTF_8.toString()).replaceAll("\\+", "%20").trim();
     }
 }
